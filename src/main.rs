@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+#![allow(non_camel_case_types)]
 #[macro_use]
 extern crate glium;
 pub mod init;
@@ -32,9 +33,22 @@ pub fn rldshd(d:&Display,s:&mut stuff){
     }
     println!("rldshd");
 }
+pub struct shapedata{
+    x:f32,
+    y:f32,
+    r:f32,
+}
+impl shapedata{
+    pub fn new()->Self{
+        shapedata{x:0.0,y:0.0,r:0.1}
+    }
+}
 fn main() {
     let (dsp,evl) = init();
     let mut utime:f32 = 0.0;
+    let mut shp1:shapedata=shapedata::new();
+    let mut shp2:shapedata=shapedata::new();
+    let mut sdfo:i8=1;
     let (snd,rcv) = mpsc::channel();
     let mut world = stuff{vecprg:Vec::new(),vecvrt:Vec::new(),id:0};
     let mut hotwatch = Hotwatch::new_with_custom_delay(Duration::from_millis(250)).expect("hotwatch failed");
@@ -77,6 +91,52 @@ fn main() {
                                event::VirtualKeyCode::Escape=>{
 
                                }
+                               event::VirtualKeyCode::Left=>{
+                                   shp1.x+=0.10;
+                               }
+                               event::VirtualKeyCode::Right=>{
+                                   shp1.x-=0.10;
+                               }
+                               event::VirtualKeyCode::Up=>{
+                                   shp1.y-=0.10;
+                               }
+                               event::VirtualKeyCode::Down=>{
+                                   shp1.y+=0.10;
+                               }
+                               event::VirtualKeyCode::H=>{
+                                   shp2.x+=0.10;
+                               }
+                               event::VirtualKeyCode::L=>{
+                                   shp2.x-=0.10;
+                               }
+                               event::VirtualKeyCode::K=>{
+                                   shp2.y-=0.10;
+                               }
+                               event::VirtualKeyCode::J=>{
+                                   shp2.y+=0.10;
+                               }
+                               event::VirtualKeyCode::D=>{
+                                   shp1.r+=0.01;
+                               }
+                               event::VirtualKeyCode::S=>{
+                                   shp1.r-=0.01;
+                               }
+                               event::VirtualKeyCode::Z=>{
+                                   shp2.r+=0.01;
+                               }
+                               event::VirtualKeyCode::E=>{
+                                   shp2.r-=0.01;
+                               }
+                               event::VirtualKeyCode::Key1=>{
+                                   sdfo = 1;
+                               }
+                               event::VirtualKeyCode::Key2=>{
+                                   sdfo = 2;
+                               }
+                               event::VirtualKeyCode::Key3=>{
+                                   sdfo = 3;
+                               }
+
                                _=>{}
                            }
                        }
@@ -94,7 +154,7 @@ fn main() {
         }
         // if rcv.try_recv().is_err()==true{
         //     rldshd(&dsp,&mut world);
-        // }
+        //
         match rcv.try_recv(){
            Ok(_)=> rldshd(&dsp,&mut world),
            Err(_)=>{},
@@ -103,7 +163,9 @@ fn main() {
         let mut trg = dsp.draw();
         trg.clear_color(0.0, 0.0, 0.0, 1.0);
         for i in 0..world.id {
-            trg.draw(&world.vecvrt[i], &indices,&world.vecprg[i],&uniform!{utime:utime},&Default::default()).unwrap();
+            trg.draw(&world.vecvrt[i], &indices,&world.vecprg[i],
+                &uniform!{utime:utime,shp1x:shp1.x,shp1y:shp1.y,shp1r:shp1.r,
+                            shp2x:shp2.x,shp2y:shp2.y,shp2r:shp2.r,sdfo:sdfo},&Default::default()).unwrap();
         }
         trg.finish().unwrap();
     });
