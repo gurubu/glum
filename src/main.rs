@@ -6,6 +6,8 @@ use egui::epaint::Shadow;
 use egui::{Style, Visuals, Rounding, Color32};
 use egui_glium::{EguiGlium, egui_winit::egui::Widget};
 use glium::glutin::surface::WindowSurface;
+use glium::{implement_uniform_block, uniform};
+use glium::uniforms::UniformBuffer;
 use glium::{Program,VertexBuffer,backend::{glutin::{SimpleWindowBuilder, self}, Context}, Surface, Display, implement_vertex, uniforms::EmptyUniforms};
 use hotwatch::{Hotwatch, EventKind,Event as hwevnt};
 use winit::{event::WindowEvent, event_loop::ControlFlow, dpi::{PhysicalSize, LogicalSize}, window::WindowBuilder};
@@ -69,7 +71,16 @@ fn main(){
         style.visuals.window_fill = Color32::GRAY;
         style.visuals.override_text_color = Some(Color32::WHITE);
     });
+    #[derive(Copy,Clone)]
+    struct shape{
+        posx:[f32;2],
+        posy:[f32;2],
+        radius:[f32;2],
+    }
+    let mut shp1=UniformBuffer::new(&dsp,shape{posx:[0.2,-0.2],posy:[0.0,0.2],radius:[0.4,0.4]}).unwrap();
+    implement_uniform_block!(shape,posx,posy,radius);
     evl.run(move|event,_,control_flow|{
+        let uniform=uniform!{block:&shp1};
         let mut redraw=||{
             let mut quit = false;
             let repaintafter=egui.run(&wnd,|eguictx|{
@@ -104,7 +115,7 @@ fn main(){
                 frame.clear_color(0.0,1.0,0.0,1.0);
                 for i in 0..world.id {
                     frame.draw(&world.vecvrt[i], &indices,&world.vecprg[i],
-                &EmptyUniforms,&Default::default()).unwrap();
+                &uniform,&Default::default()).unwrap();
                 }
                 egui.paint(&dsp,&mut frame);
                 frame.finish().unwrap();

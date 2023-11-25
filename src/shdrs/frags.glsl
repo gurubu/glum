@@ -8,12 +8,21 @@ out vec3 col;
 //uniform float shp2y;
 //uniform float shp2r;
 //uniform int sdfo;
+uniform block{
+  vec2 posx;
+  vec2 posy;
+  vec2 radius;
+};
 float smin(float a,float b,float k){
   float res = exp2(-k*a)+exp2(-k*b);
   return -log2(res)/k;
 }
 float sphere(vec2 p,float r){return length(p)-r;}
-float scene(vec2 p){return smin(sphere(vec2(p.x-0.2,p.y),0.4),sphere(vec2(p.x+0.2,p.y),0.4),80.0);}
+float scene(vec2 p){return 
+  smin(
+     sphere(vec2(p.x+posx[0],p.y+posy[1]),radius[0]),
+     sphere(vec2(p.x+posx[1],p.y+posy[1]),radius[1]),
+     80.0);}
 //float scene(vec2 p){
 //  if (sdfo == 1){
 //    return smin(sphere(vec2(p.x+shp1x,p.y+shp1y),shp1r),sphere(vec2(p.x+shp2x,p.y+shp2y),shp2r),5.0);
