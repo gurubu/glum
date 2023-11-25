@@ -8,21 +8,37 @@ out vec3 col;
 //uniform float shp2y;
 //uniform float shp2r;
 //uniform int sdfo;
-uniform block{
-  vec2 posx;
-  vec2 posy;
-  vec2 radius;
-};
+uniform float shp1posx;
+uniform float shp2posx;
+uniform float shp1posy;
+uniform float shp2posy;
+uniform float shp1radi;
+uniform float shp2radi;
+uniform int   shpbool;
 float smin(float a,float b,float k){
   float res = exp2(-k*a)+exp2(-k*b);
   return -log2(res)/k;
 }
 float sphere(vec2 p,float r){return length(p)-r;}
-float scene(vec2 p){return 
+float scene(vec2 p){
+  if(shpbool==0){return 
   smin(
-     sphere(vec2(p.x+posx[0],p.y+posy[1]),radius[0]),
-     sphere(vec2(p.x+posx[1],p.y+posy[1]),radius[1]),
-     80.0);}
+     sphere(vec2(p.x-shp1posx,p.y-shp1posy),shp1radi),
+     sphere(vec2(p.x-shp2posx,p.y-shp2posy),shp2radi),
+     2.0);}
+  if(shpbool==1){return 
+  max(
+     sphere(vec2(p.x-shp1posx,p.y-shp1posy),shp1radi),
+     sphere(vec2(p.x-shp2posx,p.y-shp2posy),shp2radi)
+     );}
+
+if(shpbool==2){return 
+  max(
+    -sphere(vec2(p.x-shp1posx,p.y-shp1posy),shp1radi),
+     sphere(vec2(p.x-shp2posx,p.y-shp2posy),shp2radi)
+     );}
+
+  }
 //float scene(vec2 p){
 //  if (sdfo == 1){
 //    return smin(sphere(vec2(p.x+shp1x,p.y+shp1y),shp1r),sphere(vec2(p.x+shp2x,p.y+shp2y),shp2r),5.0);
@@ -37,7 +53,7 @@ float scene(vec2 p){return
 //void raymarching(){
 //  float depth = 0.0;
 //}
-vec2 rez = vec2(640.0,480.0);
+vec2 rez = vec2(840.0,480.0);
 void main(){
   vec2 q = (gl_FragCoord.xy+1)/2.0;
 	vec2 p = (2.0*gl_FragCoord.xy-rez.xy)/rez.y;
@@ -51,7 +67,7 @@ void main(){
   //  r = 1.0;
   //}
   float r = 0.0;
-  if(scene(p)>0.0){
+  if(scene(p)<0.0){
    r = 1.0; 
   }
   float g = 0.0;

@@ -6,6 +6,7 @@ use egui::epaint::Shadow;
 use egui::{Style, Visuals, Rounding, Color32};
 use egui_glium::{EguiGlium, egui_winit::egui::Widget};
 use glium::glutin::surface::WindowSurface;
+use glium::vertex::{EmptyVertexAttributes, EmptyInstanceAttributes};
 use glium::{implement_uniform_block, uniform};
 use glium::uniforms::UniformBuffer;
 use glium::{Program,VertexBuffer,backend::{glutin::{SimpleWindowBuilder, self}, Context}, Surface, Display, implement_vertex, uniforms::EmptyUniforms};
@@ -38,7 +39,7 @@ fn main(){
     let evl:winit::event_loop::EventLoop<()> = winit::event_loop::EventLoopBuilder::with_user_event().build(); 
     let (wnd,dsp)= SimpleWindowBuilder::new()
                     .set_window_builder(WindowBuilder::new().with_resizable(false).with_active(true))
-                    .with_inner_size(640,480)
+                    .with_inner_size(1040,480)
                     .with_title("glum")
                     .build(&evl);
     let (snd,rcv) = mpsc::channel();
@@ -51,9 +52,9 @@ fn main(){
     }).expect("failed to watch file");
     let mut egui = EguiGlium::new(&dsp,&wnd,&evl);
     let mut world:stuff=stuff{id:0,vecprg:Vec::new(),vecvrt:Vec::new()};
-    let vert1 = vert{pos:[-1.0, 1.0]};
+    let vert1 = vert{pos:[-0.5, 1.0]};
     let vert2 = vert{pos:[ 1.0, 1.0]};
-    let vert3 = vert{pos:[-1.0,-1.0]};
+    let vert3 = vert{pos:[-0.5,-1.0]};
     let vert4 = vert{pos:[ 1.0,-1.0]};
     implement_vertex!(vert,pos);
     let shape = vec![vert1, vert2, vert3,vert4];
@@ -71,16 +72,38 @@ fn main(){
         style.visuals.window_fill = Color32::GRAY;
         style.visuals.override_text_color = Some(Color32::WHITE);
     });
-    #[derive(Copy,Clone)]
-    struct shape{
-        posx:[f32;2],
-        posy:[f32;2],
-        radius:[f32;2],
+    //#[derive(Copy,Clone)]
+    //struct shape{
+    //    posx:[f32;2],
+    //    posy:[f32;2],
+    //    radius:[f32;2],
+    //}
+    let mut shp1posx:f32 = 0.0;
+    let mut shp2posx:f32 = 0.0;
+    let mut shp1posy:f32 = 0.0;
+    let mut shp2posy:f32 = 0.0;
+    let mut shp1radi:f32 = 0.0;
+    let mut shp2radi:f32 = 0.0;
+    let mut shp1bool:u8  = 0;
+    #[derive(PartialEq,Copy,Clone)]
+    pub enum boolop{
+        union,inters,negative
     }
-    let mut shp1=UniformBuffer::new(&dsp,shape{posx:[0.2,-0.2],posy:[0.0,0.2],radius:[0.4,0.4]}).unwrap();
-    implement_uniform_block!(shape,posx,posy,radius);
+    impl boolop{
+        pub fn intousize(self)->i8{
+            match self{
+                boolop::union=>0,
+                boolop::inters=>1,
+                boolop::negative=>2,
+            }
+        }
+    }
+    let mut shpboolop = boolop::union;
+    //let mut shp:shape=shape{posx:[0.0,0.0],posy:[0.0,0.0], radius:[0.4,0.4]};
+    //implement_uniform_block!(shape,posx,posy,radius);
+    //let mut shp1=UniformBuffer::new(&dsp,shp).unwrap();
+
     evl.run(move|event,_,control_flow|{
-        let uniform=uniform!{block:&shp1};
         let mut redraw=||{
             let mut quit = false;
             let repaintafter=egui.run(&wnd,|eguictx|{
@@ -89,7 +112,15 @@ fn main(){
                     .constrain(false)
                     .resizable(false)
                     .show(eguictx,|ui|{
-                        ui.label("ta mère");
+                        ui.add(egui::Slider::new(&mut shp1posx,-1.0..=1.0).text("1x"));
+                        ui.add(egui::Slider::new(&mut shp1posy,-1.0..=1.0).text("1y"));
+                        ui.add(egui::Slider::new(&mut shp1radi, 0.0..=1.0).text("1r"));
+                        ui.add(egui::Slider::new(&mut shp2posx,-1.0..=1.0).text("2x"));
+                        ui.add(egui::Slider::new(&mut shp2posy,-1.0..=1.0).text("2y"));
+                        ui.add(egui::Slider::new(&mut shp2radi, 0.0..=1.0).text("2r"));
+                        ui.selectable_value(&mut shpboolop,boolop::union,"union");
+                        ui.selectable_value(&mut shpboolop,boolop::inters,"intersection");
+                        ui.selectable_value(&mut shpboolop,boolop::negative,"negative");
                 });
             });
             *control_flow=if quit{
@@ -112,10 +143,16 @@ fn main(){
                     Err(_)=>{},
                 }
                 let mut frame = dsp.draw();
-                frame.clear_color(0.0,1.0,0.0,1.0);
+                frame.clear_color(0.0,0.0,0.0,1.0);
                 for i in 0..world.id {
                     frame.draw(&world.vecvrt[i], &indices,&world.vecprg[i],
-                &uniform,&Default::default()).unwrap();
+                    &uniform!{shp1posx:shp1posx,
+                              shp2posx:shp2posx,
+                              shp1posy:shp1posy,
+                              shp2posy:shp2posy,
+                              shp1radi:shp1radi,
+                              shp2radi:shp2radi,
+                              shpbool:shpboolop.intousize()},&Default::default()).unwrap();
                 }
                 egui.paint(&dsp,&mut frame);
                 frame.finish().unwrap();
