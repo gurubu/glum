@@ -20,6 +20,12 @@ float smin(float a,float b,float k){
   return -log2(res)/k;
 }
 float sphere(vec2 p,float r){return length(p)-r;}
+//float dynscn(){
+
+//  for(int i;i<ind;i++){
+//
+//  } 
+//}
 float scene(vec2 p){
   if(shpbool==0){return 
   smin(
